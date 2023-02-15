@@ -3,21 +3,21 @@ package com.test.nmla.tdnewmovieslistapp.activities
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.test.nmla.tdnewmovieslistapp.data.MovieAdapter
 import com.test.nmla.tdnewmovieslistapp.databinding.ActivityMainBinding
 import com.test.nmla.tdnewmovieslistapp.models.Movie
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONException
 
-
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var movieAdapter: MovieAdapter
     private lateinit var movies: ArrayList<Movie>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,12 +25,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.recyclerView.hasFixedSize()
-        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-
         movies = java.util.ArrayList()
 
-        getMovies()
+        CoroutineScope(Dispatchers.IO).launch {
+            getMovies()
+        }
     }
 
     private fun getMovies() {
@@ -53,13 +52,15 @@ class MainActivity : AppCompatActivity() {
                         movie.posterUrl = posterUrl
                         movies.add(movie)
                     }
-                    movieAdapter = MovieAdapter(movies)
-                    recyclerView.adapter = movieAdapter
+                    binding.recyclerView.hasFixedSize()
+                    binding.recyclerView.layoutManager = LinearLayoutManager(this)
+                    binding.recyclerView.adapter = MovieAdapter(movies)
                 } catch (e: JSONException) {
                     e.printStackTrace()
                 }
-            })
-        { error -> error.printStackTrace() }
+            }) { error ->
+            error.printStackTrace()
+        }
 
         queue.add(request)
     }
